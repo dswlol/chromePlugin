@@ -19,30 +19,18 @@ const isURL = (str_url: string) => {
   return re.test(str_url)
 }
 function uuid() {
-  var s = []
+  var s: any = []
   var hexDigits = '0123456789abcdef'
   for (var i = 0; i < 36; i++) {
-    s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1)
+    s[i] = hexDigits.substring(Math.floor(Math.random() * 0x10), 1)
   }
   s[14] = '4' // bits 12-15 of the time_hi_and_version field to 0010
-  s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1) // bits 6-7 of the clock_seq_hi_and_reserved to 01
+  s[19] = hexDigits.substring((s[19] & 0x3) | 0x8, 1) // bits 6-7 of the clock_seq_hi_and_reserved to 01
   s[8] = s[13] = s[18] = s[23] = '-'
 
   var uuid = s.join('')
   return uuid
 }
-
-const initData = [
-  {
-    id: uuid(),
-    status: '01',
-    open: true,
-    name: 'pageSpy',
-    code: `if (window.PageSpy) {
-     new window.PageSpy()
-}`,
-  },
-]
 
 interface List {
   url: string
@@ -75,13 +63,25 @@ const handleClick = () => {
 }
 
 const handleClickCode = () => {
-  state.codeList.push({
-    id: uuid(),
-    name: `自定义${state.codeList.length + 1}`,
-    open: true,
-    code: '',
-    status: '02',
-  })
+  state.codeList.push(
+    state.codeList.length !== 0
+      ? {
+          id: uuid(),
+          name: `自定义${state.codeList.length + 1}`,
+          open: true,
+          code: '',
+          status: '02',
+        }
+      : {
+          id: uuid(),
+          status: '02',
+          open: true,
+          name: 'pageSpy',
+          code: `if (window.PageSpy) {
+    new window.PageSpy()
+}`,
+        }
+  )
 }
 
 const saveData = (data: any[], type = 'saveData') => {
@@ -139,25 +139,15 @@ const codeEnum = computed(() => {
 })
 
 onMounted(() => {
-  chrome.runtime.sendMessage({ type: 'getData' }, (response: any) => {
+  chrome.runtime.sendMessage({ type: 'getData' }, () => {
     // console.log('收到返回值了', response)
   })
   chrome.runtime.onMessage.addListener((request, sender, response) => {
-    // console.log('request--popup===', request)
+    console.log(request, 'request--popup===', sender)
     response('popup:ok')
     if (request.type === 'getData') {
       state.list = request?.data?.dataSource || []
-      if (
-        !request?.data?.codeSource ||
-        request?.data?.codeSource.length === 0
-      ) {
-        state.codeList = initData
-        chrome.storage.sync.set({ codeSource: initData }, () => {
-          // console.log('保存成功')
-        })
-      } else {
-        state.codeList = request?.data?.codeSource
-      }
+      state.codeList = request?.data?.codeSource || []
     }
   })
 })

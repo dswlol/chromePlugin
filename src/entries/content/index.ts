@@ -44,7 +44,7 @@ export function loadVoLteResourceList(
 chrome.runtime.onMessage.addListener(({ type, data }, sender, sendResponse) => {
   // console.log(type, '接收到来自页面脚本的消息:', data)
   if (isFirst && type === 'addScript' && data.length > 0) {
-    console.log('这次执行啦:', data)
+    console.log('这次执行啦:', data, sender)
     loadVoLteResourceList(data).then(() => {
       isFirst = false
     })

@@ -1,11 +1,24 @@
-import logoIcon from '@/assets/logo.png'
 chrome.runtime.onInstalled.addListener(async () => {
   const url = chrome.runtime.getURL('src/entries/options/index.html')
 
-  const tab = await chrome.tabs.create({ url: url })
+  await chrome.tabs.create({ url: url })
 
   // console.log(`Created tab ${tab.id}`)
 })
+
+function uuid() {
+  var s: any = []
+  var hexDigits = '0123456789abcdef'
+  for (var i = 0; i < 36; i++) {
+    s[i] = hexDigits.substring(Math.floor(Math.random() * 0x10), 1)
+  }
+  s[14] = '4' // bits 12-15 of the time_hi_and_version field to 0010
+  s[19] = hexDigits.substring((s[19] & 0x3) | 0x8, 1) // bits 6-7 of the clock_seq_hi_and_reserved to 01
+  s[8] = s[13] = s[18] = s[23] = '-'
+
+  var uuid = s.join('')
+  return uuid
+}
 
 const sendScript = (urlSource: any, tabId: number) => {
   if (urlSource) {
@@ -46,17 +59,18 @@ const sendScript = (urlSource: any, tabId: number) => {
  * 通信函数
  */
 chrome.runtime.onMessage.addListener((request, sender, response) => {
-  response('收到：ok', request)
+  response('收到：ok')
   if (request.type === 'getData') {
     chrome.storage.sync.get(['dataSource', 'codeSource'], (result) => {
       // console.log('加载初始数据' + JSON.stringify(result))
+
       chrome.runtime.sendMessage(
         {
           type: request.type,
           data: result,
         },
         (response: any) => {
-          // console.log('popup已经收到', response)
+          console.log('popup已经收到', response, sender)
         }
       )
     })
@@ -94,7 +108,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   }
 })
 
-chrome.tabs.onActivated.addListener(({ tabId, windowId }) => {
+chrome.tabs.onActivated.addListener(({ tabId }) => {
   chrome.tabs.get(tabId, function (tab) {
     sendScript(tab.url, tabId)
   })

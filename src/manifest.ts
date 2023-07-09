@@ -1,10 +1,8 @@
-import pkg from '../package.json'
-
 const manifest: chrome.runtime.Manifest = {
   manifest_version: 2,
   name: '众安插件助手',
-  version: pkg.version,
-  description: pkg.description,
+  version: '1.0.1',
+  description: '给页面加入脚本',
   icons: {
     '16': 'logo.png',
     '48': 'logo.png',
